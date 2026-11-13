@@ -1,0 +1,18 @@
+services:
+  postgres:
+    container_name: opportunity_portal
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=opportunity_portal
+    networks:
+      - dev
+
+networks:
+  dev:
+
+volumes:
+  pgdata:

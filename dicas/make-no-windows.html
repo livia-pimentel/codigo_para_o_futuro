@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Make no Windows 11</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna única de leitura no celular, blocos de terminal como protagonistas */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1a2230;
+  --muted: #5a6577;
+  --line: #dde2ea;
+  --accent: #0e6b8a;
+  --accent-soft: #e2f1f6;
+  --term-bg: #13202b;
+  --term-fg: #dbe7ee;
+  --term-dim: #7f97a6;
+  --term-key: #6fd0e8;
+  --warn: #9a5b00;
+  --warn-soft: #fff3df;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #161e27; --fg: #e3e9f0; --muted: #9aa7b8; --line: #263241;
+    --accent: #5cc3e0; --accent-soft: #15303b; --term-bg: #0a1117; --term-fg: #dbe7ee;
+    --term-dim: #7f97a6; --term-key: #6fd0e8; --warn: #f0b45a; --warn-soft: #2c2214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #161e27; --fg: #e3e9f0; --muted: #9aa7b8; --line: #263241;
+  --accent: #5cc3e0; --accent-soft: #15303b; --term-bg: #0a1117; --term-fg: #dbe7ee;
+  --term-dim: #7f97a6; --term-key: #6fd0e8; --warn: #f0b45a; --warn-soft: #2c2214;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+}
+.wrap {
+  max-width: 720px; margin: 0 auto;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px;
+}
+header { display: flex; flex-direction: column; gap: 12px; }
+.prompt {
+  font-family: var(--font-mono); font-size: 14px; color: var(--accent);
+  letter-spacing: .02em;
+}
+h1 { font-size: clamp(30px, 8vw, 44px); line-height: 1.1; margin: 0; text-wrap: balance; font-weight: 700; }
+.lead { font-size: 18px; color: var(--muted); margin: 0; max-width: 60ch; }
+section { display: flex; flex-direction: column; gap: 14px; }
+h2 { font-size: 22px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 17px; margin: 8px 0 0; }
+p { margin: 0; max-width: 65ch; }
+code { font-family: var(--font-mono); font-size: .9em; background: var(--accent-soft); color: var(--fg); padding: 1px 5px; border-radius: 4px; }
+ul, ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+li { padding-left: 2px; }
+strong { font-weight: 600; }
+
+.term {
+  background: var(--term-bg); color: var(--term-fg); border-radius: 10px;
+  position: relative; min-width: 0;
+}
+.term pre {
+  margin: 0; padding: 16px 16px 16px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 14px; line-height: 1.55; tab-size: 4;
+}
+.term .label {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 8px 10px 0 16px; font-family: var(--font-mono); font-size: 12px;
+  color: var(--term-dim); text-transform: uppercase; letter-spacing: .08em;
+}
+.copy {
+  font: 500 12px var(--font-mono); color: var(--term-key);
+  background: transparent; border: 1px solid #2f4352; border-radius: 6px;
+  padding: 5px 10px; cursor: pointer; text-transform: none; letter-spacing: 0;
+}
+.copy:hover { border-color: var(--term-key); }
+.copy:focus-visible { outline: 2px solid var(--term-key); outline-offset: 2px; }
+
+.map { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+
+.steps { counter-reset: s; list-style: none; padding: 0; gap: 18px; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 0; }
+.steps > li::before {
+  content: counter(s); width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent); color: var(--bg); font-weight: 700;
+  display: grid; place-items: center; font-size: 15px;
+}
+.steps > li > div { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.note {
+  background: var(--warn-soft); color: var(--fg); border-radius: 10px;
+  padding: 12px 14px; font-size: 15px;
+}
+.note strong { color: var(--warn); }
+
+.alt { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.alt div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.alt span { font-size: 14px; color: var(--muted); }
+
+.faq { display: flex; flex-direction: column; gap: 10px; }
+.faq div { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; display: flex; flex-direction: column; gap: 4px; }
+.faq b { font-family: var(--font-mono); font-size: 14px; font-weight: 500; word-break: break-word; }
+.faq span { font-size: 15px; color: var(--muted); }
+
+.check { list-style: none; padding: 0; }
+.check li { display: flex; gap: 10px; align-items: baseline; }
+.check li::before { content: "[ ]"; font-family: var(--font-mono); color: var(--accent); font-size: 14px; flex: none; }
+footer { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body style="margin:0">
+
+<main class="wrap">
+  <header>
+    <div class="prompt">C:\projeto&gt; make help</div>
+    <h1>Make no Windows 11</h1>
+    <p class="lead">O que é, por que o time vai usar e como instalar em 5 minutos. Depois disso, todo projeto roda com os mesmos comandos, seja qual for a stack.</p>
+  </header>
+
+  <section>
+    <h2>O que é o Make</h2>
+    <p>O Make é um executor de tarefas: você dá um nome curto a um comando longo e roda só <code>make &lt;nome&gt;</code>. Nasceu em 1976 para compilar C, mas hoje é usado em qualquer stack como o "cardápio de comandos" do projeto.</p>
+    <p>As regras ficam num arquivo <code>Makefile</code> na raiz do projeto. Cada regra tem um <strong>alvo</strong> (o nome que você digita), <strong>dependências</strong> (o que roda antes) e a <strong>receita</strong> (os comandos de terminal). O Make não substitui npm, Maven, pip ou Docker: ele só chama essas ferramentas por você.</p>
+  </section>
+
+  <section>
+    <h2>Por que vamos usar</h2>
+    <p>Ninguém precisa lembrar se é <code>go run .</code>, <code>npm run dev</code> ou <code>flutter run</code>. Em qualquer projeto do curso, é <code>make run</code>.</p>
+    <div class="map">
+      <table>
+        <thead><tr><th>Você digita</th><th>Go</th><th>Vue</th><th>Flutter</th></tr></thead>
+        <tbody>
+          <tr><td><code>make install</code></td><td><code>go mod download</code></td><td><code>npm install</code></td><td><code>flutter pub get</code></td></tr>
+          <tr><td><code>make run</code></td><td><code>go run .</code></td><td><code>npm run dev</code></td><td><code>flutter run</code></td></tr>
+          <tr><td><code>make test</code></td><td><code>go test ./...</code></td><td><code>npm run test:unit</code></td><td><code>flutter test</code></td></tr>
+          <tr><td><code>make lint</code></td><td><code>go vet ./...</code></td><td><code>npm run lint</code></td><td><code>flutter analyze</code></td></tr>
+          <tr><td><code>make build</code></td><td><code>go build -o bin/app .</code></td><td><code>npm run build</code></td><td><code>flutter build apk</code></td></tr>
+          <tr><td><code>make up</code></td><td colspan="3"><code>docker compose up -d</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul>
+      <li><strong>Onboarding rápido:</strong> quem chega roda <code>make help</code> e vê tudo o que o projeto faz.</li>
+      <li><strong>Comandos versionados:</strong> o Makefile fica no Git, todo mundo usa os mesmos parâmetros.</li>
+      <li><strong>Mesmo comando no CI:</strong> o pipeline chama <code>make test</code>, igual à sua máquina.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Como instalar (winget)</h2>
+    <p>O Windows não traz o Make. O winget já vem no Windows 11 e instala o GNU Make 4.x sem precisar de administrador.</p>
+    <ol class="steps">
+      <li><div>
+        <p>Abra o <strong>Terminal</strong> (tecla Windows, digite "Terminal", Enter) e confira o winget. Se der erro, atualize o <strong>App Installer</strong> na Microsoft Store.</p>
+        <div class="term"><div class="label">PowerShell<button class="copy" type="button">Copiar</button></div><pre>winget --version</pre></div>
+      </div></li>
+      <li><div>
+        <p>Instale o Make. Se perguntar sobre os termos, digite <code>Y</code>.</p>
+        <div class="term"><div class="label">PowerShell<button class="copy" type="button">Copiar</button></div><pre>winget install ezwinports.make</pre></div>
+      </div></li>
+      <li><div>
+        <p><strong>Feche e abra o terminal de novo.</strong> No VS Code, feche o programa inteiro, não só a aba. O PATH novo só vale para terminais abertos depois.</p>
+      </div></li>
+      <li><div>
+        <p>Confira. A saída deve começar com <code>GNU Make 4.x</code>.</p>
+        <div class="term"><div class="label">PowerShell<button class="copy" type="button">Copiar</button></div><pre>make --version</pre></div>
+      </div></li>
+    </ol>
+    <div class="note"><strong>Apareceu "make não é reconhecido"?</strong> Feche tudo e abra de novo. Se continuar, procure onde está o <code>make.exe</code> com o comando abaixo e adicione essa pasta no <strong>Path</strong> em "Editar as variáveis de ambiente para sua conta".</div>
+    <div class="term"><div class="label">PowerShell<button class="copy" type="button">Copiar</button></div><pre>Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Recurse -Filter make.exe | Select-Object FullName</pre></div>
+
+    <h3>Outras formas de instalar</h3>
+    <div class="alt">
+      <div><code>choco install make</code><span>Chocolatey, terminal como administrador</span></div>
+      <div><code>scoop install make</code><span>Scoop, terminal comum</span></div>
+      <div><code>sudo apt install make</code><span>Dentro do WSL (Ubuntu)</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Makefile modelo</h2>
+    <p>Copie para a raiz do projeto e troque as receitas pela sua stack (tabela acima). As linhas de comando começam com <strong>TAB</strong>, nunca com espaços.</p>
+    <div class="term"><div class="label">Makefile<button class="copy" type="button">Copiar</button></div><pre># Comandos do projeto. Rode "make" ou "make help" para ver a lista.
+.DEFAULT_GOAL := help
+
+# No Windows as receitas rodam no PowerShell; no Mac, Linux e WSL, no sh.
+ifeq ($(OS),Windows_NT)
+SHELL := powershell.exe
+.SHELLFLAGS := -NoProfile -Command
+endif
+
+PORT ?= 3000
+
+.PHONY: help install run test lint build up down
+
+help: ## Lista os comandos disponíveis
+ifeq ($(OS),Windows_NT)
+	@Select-String -Path $(firstword $(MAKEFILE_LIST)) -Pattern '^([a-zA-Z_-]+):.*## (.*)$$' | ForEach-Object { '  {0,-10} {1}' -f $$_.Matches[0].Groups[1].Value, $$_.Matches[0].Groups[2].Value }
+else
+	@grep -E '^[a-zA-Z_-]+:.*## ' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
+endif
+
+install: ## Instala as dependências
+	npm install
+
+run: install ## Sobe a aplicação em modo dev (PORT=3000)
+	npm run dev -- --port $(PORT)
+
+test: ## Roda os testes
+	npm test
+
+lint: ## Verifica o estilo do código
+	npm run lint
+
+build: ## Gera o build de produção
+	npm run build
+
+up: ## Sobe banco e filas com Docker
+	docker compose up -d
+
+down: ## Derruba os serviços do Docker
+	docker compose down</pre></div>
+    <p>Rodando só <code>make</code>, aparece a lista:</p>
+    <div class="term"><div class="label">Saída</div><pre>  help       Lista os comandos disponíveis
+  install    Instala as dependências
+  run        Sobe a aplicação em modo dev (PORT=3000)
+  test       Roda os testes
+  lint       Verifica o estilo do código
+  build      Gera o build de produção
+  up         Sobe banco e filas com Docker
+  down       Derruba os serviços do Docker</pre></div>
+    <p>Para documentar um alvo novo, coloque <code>## descrição</code> na linha dele. Para mudar uma variável na hora: <code>make run PORT=8080</code>.</p>
+  </section>
+
+  <section>
+    <h2>Deu erro?</h2>
+    <div class="faq">
+      <div><b>*** missing separator. Stop.</b><span>A receita está com espaços em vez de TAB. No VS Code, clique em "Spaces" na barra inferior e troque para "Tab".</span></div>
+      <div><b>make: 'test' is up to date.</b><span>Existe uma pasta com o nome do alvo. Coloque o alvo na linha <code>.PHONY</code>.</span></div>
+      <div><b>No rule to make target 'xyz'</b><span>Nome errado ou você não está na raiz do projeto. Rode <code>make help</code>.</span></div>
+      <div><b>'grep' não é reconhecido</b><span>Comando de Linux rodando no Windows. Use o bloco <code>ifeq ($(OS),Windows_NT)</code> ou rode pelo WSL.</span></div>
+      <div><b>Erro estranho só no Windows (^M)</b><span>Arquivo salvo com CRLF. Salve o Makefile como LF (barra inferior do VS Code).</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cola rápida</h2>
+    <ul class="check">
+      <li><span><code>winget install ezwinports.make</code></span></li>
+      <li><span>Fechar e reabrir terminal e VS Code</span></li>
+      <li><span><code>make --version</code> mostra GNU Make 4.x</span></li>
+      <li><span>Copiar o Makefile modelo e ajustar à sua stack</span></li>
+      <li><span>Rodar <code>make</code> e ver a lista de comandos</span></li>
+    </ul>
+  </section>
+
+  <footer>No dia a dia: <code>make install</code> · <code>make run</code> · <code>make test</code> · <code>make lint</code> · <code>make build</code> · <code>make up</code> · <code>make down</code></footer>
+</main>
+
+<script>
+document.querySelectorAll('.copy').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pre = btn.closest('.term').querySelector('pre');
+    var text = pre.textContent;
+    var done = function () { btn.textContent = 'Copiado'; setTimeout(function () { btn.textContent = 'Copiar'; }, 1500); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Selecionado, use Ctrl+C';
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } catch (e) { fallback(); }
+  });
+});
+</script>
+</body>
+</html>
